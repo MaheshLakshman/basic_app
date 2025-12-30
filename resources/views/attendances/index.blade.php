@@ -6,8 +6,8 @@
 
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h6 class="mb-0">Users</h6>
-    <button type="button" class="btn btn-primary" id="create-user-btn">Create User</button>
+    <h6 class="mb-0">Attendances</h6>
+    <button type="button" class="btn btn-primary" id="create-attendance-btn">Record Attendance</button>
 </div>
 
 <!-- Filters -->
@@ -15,23 +15,28 @@
     <div class="card-body">
         <form id="filter-form" class="row align-items-end g-3">
             <div class="col-md-3">
-                <label for="filter-name" class="form-label small fw-bold">Name</label>
-                <input type="text" class="form-control" id="filter-name" placeholder="Search by name...">
+                <label for="filter-date" class="form-label small fw-bold">Date</label>
+                <input type="date" class="form-control" id="filter-date">
             </div>
             <div class="col-md-3">
-                <label for="filter-email" class="form-label small fw-bold">Email</label>
-                <input type="text" class="form-control" id="filter-email" placeholder="Search by email...">
-            </div>
-            <div class="col-md-3">
-                <label for="filter-organization" class="form-label small fw-bold">Organization</label>
-                <select class="form-select" id="filter-organization">
-                    <option value="">All Organizations</option>
-                    @foreach($organizations as $org)
-                        <option value="{{ $org->id }}">{{ $org->name }}</option>
+                <label for="filter-user" class="form-label small fw-bold">User</label>
+                <select class="form-select" id="filter-user">
+                    <option value="">All Users</option>
+                    @foreach($users as $user)
+                        <option value="{{ $user->id }}">{{ $user->name }}</option>
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-3 d-flex gap-2">
+            <div class="col-md-2">
+                <label for="filter-status" class="form-label small fw-bold">Status</label>
+                <select class="form-select" id="filter-status">
+                    <option value="">All Status</option>
+                    <option value="present">Present</option>
+                    <option value="absent">Absent</option>
+                    <option value="half_day">Half Day</option>
+                </select>
+            </div>
+            <div class="col-md-4 d-flex gap-2">
                 <button type="button" class="btn btn-primary px-4" id="search-btn">
                     <i class="bi bi-search me-1"></i> Search
                 </button>
@@ -46,14 +51,17 @@
 <div class="card shadow-sm">
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-hover w-100" id="users-table">
+            <table class="table table-hover w-100" id="attendances-table">
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Organization</th>
-                        <th>Roles</th>
+                        <th>Date</th>
+                        <th>User</th>
+                        <th>Type</th>
+                        <th>Branch</th>
+                        <th>Check In</th>
+                        <th>Check Out</th>
+                        <th>Status</th>
                         <th width="150px">Actions</th>
                     </tr>
                 </thead>
@@ -62,12 +70,12 @@
     </div>
 </div>
 
-<!-- User Modal -->
-<div class="modal fade" id="user-modal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
+<!-- Attendance Modal -->
+<div class="modal fade" id="attendance-modal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="attendanceModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content border-0 shadow">
             <div class="modal-header">
-                <h5 class="modal-title" id="userModalLabel">User Form</h5>
+                <h5 class="modal-title" id="attendanceModalLabel">Attendance Form</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="modal-body-content">
@@ -90,23 +98,48 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 $(function() {
-    let table = $('#users-table').DataTable({
+    let table = $('#attendances-table').DataTable({
         processing: true,
         serverSide: true,
         ajax: {
-            url: "{{ route('users.index') }}",
+            url: "{{ route('attendances.index') }}",
             data: function (d) {
-                d.name = $('#filter-name').val();
-                d.email = $('#filter-email').val();
-                d.organization_id = $('#filter-organization').val();
+                d.date = $('#filter-date').val();
+                d.user_id = $('#filter-user').val();
+                d.status = $('#filter-status').val();
             }
         },
         columns: [
             { data: 'id', name: 'id' },
-            { data: 'name', name: 'name' },
-            { data: 'email', name: 'email' },
-            { data: 'organization_name', name: 'organization_name', orderable: false },
-            { data: 'roles', name: 'roles', orderable: false, searchable: false },
+            { data: 'attendance_day', name: 'attendance_day' },
+            { data: 'user_name', name: 'user_name' },
+            { data: 'attendance_type', name: 'attendance_type' },
+            { data: 'branch_name', name: 'branch_name' },
+            { 
+                 data: 'check_in_at', 
+                 name: 'check_in_at',
+                 render: function(data) {
+                    return data ? new Date(data).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '-';
+                 }
+            },
+            { 
+                 data: 'check_out_at', 
+                 name: 'check_out_at',
+                 render: function(data) {
+                    return data ? new Date(data).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '-';
+                 }
+            },
+            { 
+                data: 'status', 
+                name: 'status',
+                render: function(data) {
+                    let badgeClass = 'bg-secondary';
+                    if(data === 'present') badgeClass = 'bg-success';
+                    else if(data === 'absent') badgeClass = 'bg-danger';
+                    else if(data === 'half_day') badgeClass = 'bg-warning text-dark';
+                    return `<span class="badge ${badgeClass}">${data.charAt(0).toUpperCase() + data.slice(1)}</span>`;
+                }
+            },
             { 
                 data: 'action', 
                 name: 'action', 
@@ -119,25 +152,25 @@ $(function() {
     $('#search-btn').on('click', function() { table.draw(); });
     $('#clear-btn').on('click', function() { $('#filter-form')[0].reset(); table.draw(); });
 
-    const modal = new bootstrap.Modal(document.getElementById('user-modal'));
+    const modal = new bootstrap.Modal(document.getElementById('attendance-modal'));
     const modalBody = $('#modal-body-content');
 
-    $('#create-user-btn').on('click', function() {
-        $('#userModalLabel').text('Create User');
+    $('#create-attendance-btn').on('click', function() {
+        $('#attendanceModalLabel').text('Record Attendance');
         modalBody.html('<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>');
         modal.show();
-        $.get("users/create", function(data) { modalBody.html(data); });
+        $.get("attendances/create", function(data) { modalBody.html(data); });
     });
 
     $(document).on('click', '.edit-btn', function() {
         let id = $(this).data('id');
-        $('#userModalLabel').text('Edit User');
+        $('#attendanceModalLabel').text('Edit Attendance');
         modalBody.html('<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>');
         modal.show();
-        $.get(`users/${id}/edit`, function(data) { modalBody.html(data); });
+        $.get(`attendances/${id}/edit`, function(data) { modalBody.html(data); });
     });
 
-    $(document).on('submit', '#user-form', function(e) {
+    $(document).on('submit', '#attendance-form', function(e) {
         e.preventDefault();
         let form = $(this);
         let saveBtn = $('#save-btn');
@@ -159,17 +192,7 @@ $(function() {
                     $('.is-invalid').removeClass('is-invalid');
                     $('.invalid-feedback').remove();
                     $.each(errors, function(key, value) {
-                        let field = $(`[name="${key}"]`);
-                        if(key.includes('.')) {
-                             let parts = key.split('.');
-                             field = $(`[name="${parts[0]}[${parts[1]}]"]`);
-                        }
-                        field.addClass('is-invalid');
-                        if (field.next('.invalid-feedback').length === 0) {
-                            field.after(`<div class="invalid-feedback">${value[0]}</div>`);
-                        } else {
-                            field.next('.invalid-feedback').text(value[0]);
-                        }
+                        $(`[name="${key}"]`).addClass('is-invalid').after(`<div class="invalid-feedback">${value[0]}</div>`);
                     });
                 } else {
                     Swal.fire('Error', 'Something went wrong!', 'error');
@@ -178,25 +201,23 @@ $(function() {
         });
     });
 
+    // Delete Logic (Standard)
     $(document).on('click', '.delete-btn', function() {
         let id = $(this).data('id');
         Swal.fire({
-            title: 'Delete this user?',
+            title: 'Delete this record?',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Yes, delete it!'
         }).then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
-                    url: `users/${id}`,
+                    url: `attendances/${id}`,
                     type: 'POST',
                     data: { _token: "{{ csrf_token() }}", _method: 'DELETE' },
                     success: function(resp) {
                         table.ajax.reload();
                         Swal.fire('Deleted', resp.success, 'success');
-                    },
-                    error: function(xhr) {
-                         Swal.fire('Error', xhr.responseJSON.error || 'Could not delete user.', 'error');
                     }
                 });
             }

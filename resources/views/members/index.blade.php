@@ -6,23 +6,15 @@
 
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h6 class="mb-0">Users</h6>
-    <button type="button" class="btn btn-primary" id="create-user-btn">Create User</button>
+    <h6 class="mb-0">Members</h6>
+    <button type="button" class="btn btn-primary" id="create-member-btn">Add Member</button>
 </div>
 
 <!-- Filters -->
 <div class="card shadow-sm mb-4">
     <div class="card-body">
         <form id="filter-form" class="row align-items-end g-3">
-            <div class="col-md-3">
-                <label for="filter-name" class="form-label small fw-bold">Name</label>
-                <input type="text" class="form-control" id="filter-name" placeholder="Search by name...">
-            </div>
-            <div class="col-md-3">
-                <label for="filter-email" class="form-label small fw-bold">Email</label>
-                <input type="text" class="form-control" id="filter-email" placeholder="Search by email...">
-            </div>
-            <div class="col-md-3">
+             <div class="col-md-3">
                 <label for="filter-organization" class="form-label small fw-bold">Organization</label>
                 <select class="form-select" id="filter-organization">
                     <option value="">All Organizations</option>
@@ -30,6 +22,10 @@
                         <option value="{{ $org->id }}">{{ $org->name }}</option>
                     @endforeach
                 </select>
+            </div>
+            <div class="col-md-3">
+                <label for="filter-name" class="form-label small fw-bold">Name</label>
+                <input type="text" class="form-control" id="filter-name" placeholder="Search by name...">
             </div>
             <div class="col-md-3 d-flex gap-2">
                 <button type="button" class="btn btn-primary px-4" id="search-btn">
@@ -46,14 +42,14 @@
 <div class="card shadow-sm">
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-hover w-100" id="users-table">
+            <table class="table table-hover w-100" id="members-table">
                 <thead>
                     <tr>
                         <th>ID</th>
+                        <th>Code</th>
                         <th>Name</th>
                         <th>Email</th>
                         <th>Organization</th>
-                        <th>Roles</th>
                         <th width="150px">Actions</th>
                     </tr>
                 </thead>
@@ -62,12 +58,12 @@
     </div>
 </div>
 
-<!-- User Modal -->
-<div class="modal fade" id="user-modal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
+<!-- Member Modal -->
+<div class="modal fade" id="member-modal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="memberModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content border-0 shadow">
             <div class="modal-header">
-                <h5 class="modal-title" id="userModalLabel">User Form</h5>
+                <h5 class="modal-title" id="memberModalLabel">Member Form</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="modal-body-content">
@@ -90,23 +86,22 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 $(function() {
-    let table = $('#users-table').DataTable({
+    let table = $('#members-table').DataTable({
         processing: true,
         serverSide: true,
         ajax: {
-            url: "{{ route('users.index') }}",
+            url: "{{ route('members.index') }}",
             data: function (d) {
-                d.name = $('#filter-name').val();
-                d.email = $('#filter-email').val();
                 d.organization_id = $('#filter-organization').val();
+                d.name = $('#filter-name').val();
             }
         },
         columns: [
             { data: 'id', name: 'id' },
+            { data: 'member_code', name: 'member_code' },
             { data: 'name', name: 'name' },
             { data: 'email', name: 'email' },
             { data: 'organization_name', name: 'organization_name', orderable: false },
-            { data: 'roles', name: 'roles', orderable: false, searchable: false },
             { 
                 data: 'action', 
                 name: 'action', 
@@ -119,25 +114,25 @@ $(function() {
     $('#search-btn').on('click', function() { table.draw(); });
     $('#clear-btn').on('click', function() { $('#filter-form')[0].reset(); table.draw(); });
 
-    const modal = new bootstrap.Modal(document.getElementById('user-modal'));
+    const modal = new bootstrap.Modal(document.getElementById('member-modal'));
     const modalBody = $('#modal-body-content');
 
-    $('#create-user-btn').on('click', function() {
-        $('#userModalLabel').text('Create User');
+    $('#create-member-btn').on('click', function() {
+        $('#memberModalLabel').text('Add Member');
         modalBody.html('<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>');
         modal.show();
-        $.get("users/create", function(data) { modalBody.html(data); });
+        $.get("members/create", function(data) { modalBody.html(data); });
     });
 
     $(document).on('click', '.edit-btn', function() {
         let id = $(this).data('id');
-        $('#userModalLabel').text('Edit User');
+        $('#memberModalLabel').text('Edit Member');
         modalBody.html('<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>');
         modal.show();
-        $.get(`users/${id}/edit`, function(data) { modalBody.html(data); });
+        $.get(`members/${id}/edit`, function(data) { modalBody.html(data); });
     });
 
-    $(document).on('submit', '#user-form', function(e) {
+    $(document).on('submit', '#member-form', function(e) {
         e.preventDefault();
         let form = $(this);
         let saveBtn = $('#save-btn');
@@ -181,22 +176,19 @@ $(function() {
     $(document).on('click', '.delete-btn', function() {
         let id = $(this).data('id');
         Swal.fire({
-            title: 'Delete this user?',
+            title: 'Delete this member?',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Yes, delete it!'
         }).then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
-                    url: `users/${id}`,
+                    url: `members/${id}`,
                     type: 'POST',
                     data: { _token: "{{ csrf_token() }}", _method: 'DELETE' },
                     success: function(resp) {
                         table.ajax.reload();
                         Swal.fire('Deleted', resp.success, 'success');
-                    },
-                    error: function(xhr) {
-                         Swal.fire('Error', xhr.responseJSON.error || 'Could not delete user.', 'error');
                     }
                 });
             }

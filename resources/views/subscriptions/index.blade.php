@@ -6,29 +6,30 @@
 
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h6 class="mb-0">Users</h6>
-    <button type="button" class="btn btn-primary" id="create-user-btn">Create User</button>
+    <h6 class="mb-0">Subscriptions</h6>
+    <button type="button" class="btn btn-primary" id="create-subscription-btn">Add Subscription</button>
 </div>
 
 <!-- Filters -->
 <div class="card shadow-sm mb-4">
     <div class="card-body">
         <form id="filter-form" class="row align-items-end g-3">
-            <div class="col-md-3">
-                <label for="filter-name" class="form-label small fw-bold">Name</label>
-                <input type="text" class="form-control" id="filter-name" placeholder="Search by name...">
-            </div>
-            <div class="col-md-3">
-                <label for="filter-email" class="form-label small fw-bold">Email</label>
-                <input type="text" class="form-control" id="filter-email" placeholder="Search by email...">
-            </div>
-            <div class="col-md-3">
-                <label for="filter-organization" class="form-label small fw-bold">Organization</label>
-                <select class="form-select" id="filter-organization">
-                    <option value="">All Organizations</option>
-                    @foreach($organizations as $org)
-                        <option value="{{ $org->id }}">{{ $org->name }}</option>
+             <div class="col-md-3">
+                <label for="filter-user" class="form-label small fw-bold">Member</label>
+                <select class="form-select" id="filter-user">
+                    <option value="">All Members</option>
+                    @foreach($users as $user)
+                        <option value="{{ $user->id }}">{{ $user->name }}</option>
                     @endforeach
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="filter-status" class="form-label small fw-bold">Status</label>
+                <select class="form-select" id="filter-status">
+                    <option value="">All Statuses</option>
+                    <option value="active">Active</option>
+                    <option value="frozen">Frozen</option>
+                    <option value="expired">Expired</option>
                 </select>
             </div>
             <div class="col-md-3 d-flex gap-2">
@@ -46,14 +47,15 @@
 <div class="card shadow-sm">
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-hover w-100" id="users-table">
+            <table class="table table-hover w-100" id="subscriptions-table">
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Organization</th>
-                        <th>Roles</th>
+                        <th>Member</th>
+                        <th>Plan</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Status</th>
                         <th width="150px">Actions</th>
                     </tr>
                 </thead>
@@ -62,12 +64,12 @@
     </div>
 </div>
 
-<!-- User Modal -->
-<div class="modal fade" id="user-modal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
+<!-- Subscription Modal -->
+<div class="modal fade" id="subscription-modal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="subscriptionModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content border-0 shadow">
             <div class="modal-header">
-                <h5 class="modal-title" id="userModalLabel">User Form</h5>
+                <h5 class="modal-title" id="subscriptionModalLabel">Subscription Form</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="modal-body-content">
@@ -90,23 +92,23 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 $(function() {
-    let table = $('#users-table').DataTable({
+    let table = $('#subscriptions-table').DataTable({
         processing: true,
         serverSide: true,
         ajax: {
-            url: "{{ route('users.index') }}",
+            url: "{{ route('subscriptions.index') }}",
             data: function (d) {
-                d.name = $('#filter-name').val();
-                d.email = $('#filter-email').val();
-                d.organization_id = $('#filter-organization').val();
+                d.user_id = $('#filter-user').val();
+                d.status = $('#filter-status').val();
             }
         },
         columns: [
             { data: 'id', name: 'id' },
-            { data: 'name', name: 'name' },
-            { data: 'email', name: 'email' },
-            { data: 'organization_name', name: 'organization_name', orderable: false },
-            { data: 'roles', name: 'roles', orderable: false, searchable: false },
+            { data: 'member_name', name: 'member_name', orderable: false },
+            { data: 'plan_name', name: 'plan_name', orderable: false },
+             { data: 'start_date', name: 'start_date' },
+            { data: 'end_date', name: 'end_date' },
+            { data: 'status', name: 'status' },
             { 
                 data: 'action', 
                 name: 'action', 
@@ -119,25 +121,25 @@ $(function() {
     $('#search-btn').on('click', function() { table.draw(); });
     $('#clear-btn').on('click', function() { $('#filter-form')[0].reset(); table.draw(); });
 
-    const modal = new bootstrap.Modal(document.getElementById('user-modal'));
+    const modal = new bootstrap.Modal(document.getElementById('subscription-modal'));
     const modalBody = $('#modal-body-content');
 
-    $('#create-user-btn').on('click', function() {
-        $('#userModalLabel').text('Create User');
+    $('#create-subscription-btn').on('click', function() {
+        $('#subscriptionModalLabel').text('Add Subscription');
         modalBody.html('<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>');
         modal.show();
-        $.get("users/create", function(data) { modalBody.html(data); });
+        $.get("subscriptions/create", function(data) { modalBody.html(data); });
     });
 
     $(document).on('click', '.edit-btn', function() {
         let id = $(this).data('id');
-        $('#userModalLabel').text('Edit User');
+        $('#subscriptionModalLabel').text('Edit Subscription');
         modalBody.html('<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>');
         modal.show();
-        $.get(`users/${id}/edit`, function(data) { modalBody.html(data); });
+        $.get(`subscriptions/${id}/edit`, function(data) { modalBody.html(data); });
     });
 
-    $(document).on('submit', '#user-form', function(e) {
+    $(document).on('submit', '#subscription-form', function(e) {
         e.preventDefault();
         let form = $(this);
         let saveBtn = $('#save-btn');
@@ -181,22 +183,19 @@ $(function() {
     $(document).on('click', '.delete-btn', function() {
         let id = $(this).data('id');
         Swal.fire({
-            title: 'Delete this user?',
+            title: 'Delete this subscription?',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Yes, delete it!'
         }).then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
-                    url: `users/${id}`,
+                    url: `subscriptions/${id}`,
                     type: 'POST',
                     data: { _token: "{{ csrf_token() }}", _method: 'DELETE' },
                     success: function(resp) {
                         table.ajax.reload();
                         Swal.fire('Deleted', resp.success, 'success');
-                    },
-                    error: function(xhr) {
-                         Swal.fire('Error', xhr.responseJSON.error || 'Could not delete user.', 'error');
                     }
                 });
             }

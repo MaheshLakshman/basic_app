@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class UpdateUserRequest extends FormRequest
+class UpdateTrainerRequest extends FormRequest
 {
     public function authorize()
     {
@@ -14,14 +14,18 @@ class UpdateUserRequest extends FormRequest
 
     public function rules()
     {
-        $userId = $this->route('user')->id;
+        $userId = $this->route('trainer')->id;
         return [
+            'organization_id' => 'required|exists:organizations,id',
             'name' => 'required|array',
             'name.*' => 'required|string',
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($userId)],
             'password' => 'nullable|string|min:8',
-            'organization_id' => 'nullable|exists:organizations,id',
-            'role' => 'nullable|string',
+            
+            // Profile fields
+            'specialization' => 'nullable|array',
+            'specialization.*' => 'string',
+            'experience_years' => 'nullable|integer|min:0',
         ];
     }
 }

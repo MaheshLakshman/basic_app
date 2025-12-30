@@ -30,6 +30,20 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('users', \App\Http\Controllers\UserController::class);
     Route::resource('roles', \App\Http\Controllers\RoleController::class);
     Route::resource('permissions', \App\Http\Controllers\PermissionController::class);
+    Route::resource('branches', \App\Http\Controllers\BranchController::class);
+    Route::resource('attendances', \App\Http\Controllers\AttendanceController::class);
+    Route::resource('services', \App\Http\Controllers\ServiceController::class);
+    Route::resource('plans', \App\Http\Controllers\PlanController::class);
+    Route::resource('members', \App\Http\Controllers\MemberController::class);
+    Route::resource('trainers', \App\Http\Controllers\TrainerController::class);
+    Route::resource('subscriptions', \App\Http\Controllers\SubscriptionController::class);
+
+    // Price Management
+    Route::resource('price_plans', \App\Http\Controllers\Admin\PricePlanController::class)->names('admin.price_plans');
+    Route::resource('member_price_assignments', \App\Http\Controllers\Admin\MemberPriceAssignmentController::class)->names('admin.member_price_assignments');
+    Route::resource('account_locks', \App\Http\Controllers\Admin\AccountLockController::class)->names('admin.account_locks');
+    Route::resource('price_adjustments', \App\Http\Controllers\Admin\PriceAdjustmentController::class)->names('admin.price_adjustments');
+    Route::resource('invoices', \App\Http\Controllers\Admin\InvoiceController::class)->names('admin.invoices');
 
     // Profile Routes
     Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'show'])->name('profile.show');

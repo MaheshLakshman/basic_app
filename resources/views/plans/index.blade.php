@@ -6,8 +6,8 @@
 
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h6 class="mb-0">Users</h6>
-    <button type="button" class="btn btn-primary" id="create-user-btn">Create User</button>
+    <h6 class="mb-0">Plans</h6>
+    <button type="button" class="btn btn-primary" id="create-plan-btn">Create Plan</button>
 </div>
 
 <!-- Filters -->
@@ -15,19 +15,11 @@
     <div class="card-body">
         <form id="filter-form" class="row align-items-end g-3">
             <div class="col-md-3">
-                <label for="filter-name" class="form-label small fw-bold">Name</label>
-                <input type="text" class="form-control" id="filter-name" placeholder="Search by name...">
-            </div>
-            <div class="col-md-3">
-                <label for="filter-email" class="form-label small fw-bold">Email</label>
-                <input type="text" class="form-control" id="filter-email" placeholder="Search by email...">
-            </div>
-            <div class="col-md-3">
-                <label for="filter-organization" class="form-label small fw-bold">Organization</label>
-                <select class="form-select" id="filter-organization">
-                    <option value="">All Organizations</option>
-                    @foreach($organizations as $org)
-                        <option value="{{ $org->id }}">{{ $org->name }}</option>
+                <label for="filter-service" class="form-label small fw-bold">Service</label>
+                <select class="form-select" id="filter-service">
+                    <option value="">All Services</option>
+                    @foreach($services as $service)
+                        <option value="{{ $service->id }}">{{ $service->name }}</option>
                     @endforeach
                 </select>
             </div>
@@ -46,14 +38,14 @@
 <div class="card shadow-sm">
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-hover w-100" id="users-table">
+            <table class="table table-hover w-100" id="plans-table">
                 <thead>
                     <tr>
                         <th>ID</th>
                         <th>Name</th>
-                        <th>Email</th>
-                        <th>Organization</th>
-                        <th>Roles</th>
+                        <th>Service</th>
+                        <th>Price</th>
+                        <th>Duration</th>
                         <th width="150px">Actions</th>
                     </tr>
                 </thead>
@@ -62,12 +54,12 @@
     </div>
 </div>
 
-<!-- User Modal -->
-<div class="modal fade" id="user-modal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
+<!-- Plan Modal -->
+<div class="modal fade" id="plan-modal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="planModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content border-0 shadow">
             <div class="modal-header">
-                <h5 class="modal-title" id="userModalLabel">User Form</h5>
+                <h5 class="modal-title" id="planModalLabel">Plan Form</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="modal-body-content">
@@ -90,23 +82,21 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 $(function() {
-    let table = $('#users-table').DataTable({
+    let table = $('#plans-table').DataTable({
         processing: true,
         serverSide: true,
         ajax: {
-            url: "{{ route('users.index') }}",
+            url: "{{ route('plans.index') }}",
             data: function (d) {
-                d.name = $('#filter-name').val();
-                d.email = $('#filter-email').val();
-                d.organization_id = $('#filter-organization').val();
+                d.service_id = $('#filter-service').val();
             }
         },
         columns: [
             { data: 'id', name: 'id' },
             { data: 'name', name: 'name' },
-            { data: 'email', name: 'email' },
-            { data: 'organization_name', name: 'organization_name', orderable: false },
-            { data: 'roles', name: 'roles', orderable: false, searchable: false },
+            { data: 'service_name', name: 'service_name', orderable: false },
+            { data: 'price', name: 'price' },
+            { data: 'duration', name: 'duration' },
             { 
                 data: 'action', 
                 name: 'action', 
@@ -119,25 +109,25 @@ $(function() {
     $('#search-btn').on('click', function() { table.draw(); });
     $('#clear-btn').on('click', function() { $('#filter-form')[0].reset(); table.draw(); });
 
-    const modal = new bootstrap.Modal(document.getElementById('user-modal'));
+    const modal = new bootstrap.Modal(document.getElementById('plan-modal'));
     const modalBody = $('#modal-body-content');
 
-    $('#create-user-btn').on('click', function() {
-        $('#userModalLabel').text('Create User');
+    $('#create-plan-btn').on('click', function() {
+        $('#planModalLabel').text('Create Plan');
         modalBody.html('<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>');
         modal.show();
-        $.get("users/create", function(data) { modalBody.html(data); });
+        $.get("plans/create", function(data) { modalBody.html(data); });
     });
 
     $(document).on('click', '.edit-btn', function() {
         let id = $(this).data('id');
-        $('#userModalLabel').text('Edit User');
+        $('#planModalLabel').text('Edit Plan');
         modalBody.html('<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>');
         modal.show();
-        $.get(`users/${id}/edit`, function(data) { modalBody.html(data); });
+        $.get(`plans/${id}/edit`, function(data) { modalBody.html(data); });
     });
 
-    $(document).on('submit', '#user-form', function(e) {
+    $(document).on('submit', '#plan-form', function(e) {
         e.preventDefault();
         let form = $(this);
         let saveBtn = $('#save-btn');
@@ -178,25 +168,23 @@ $(function() {
         });
     });
 
+    // Delete Logic
     $(document).on('click', '.delete-btn', function() {
         let id = $(this).data('id');
         Swal.fire({
-            title: 'Delete this user?',
+            title: 'Delete this plan?',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Yes, delete it!'
         }).then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
-                    url: `users/${id}`,
+                    url: `plans/${id}`,
                     type: 'POST',
                     data: { _token: "{{ csrf_token() }}", _method: 'DELETE' },
                     success: function(resp) {
                         table.ajax.reload();
                         Swal.fire('Deleted', resp.success, 'success');
-                    },
-                    error: function(xhr) {
-                         Swal.fire('Error', xhr.responseJSON.error || 'Could not delete user.', 'error');
                     }
                 });
             }

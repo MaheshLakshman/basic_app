@@ -10,13 +10,37 @@
     @endif
 
     <div class="row g-3 mb-3">
-        <div class="col-md-6">
-            <label for="name" class="form-label">Full Name</label>
-            <input type="text" name="name" id="name" class="form-control" 
-                   value="{{ old('name', $isEdit ? $user->name : '') }}" required>
+         <div class="col-md-12">
+            <label for="organization_id" class="form-label">Organization <span class="text-danger">*</span></label>
+            <select name="organization_id" id="organization_id" class="form-select @error('organization_id') is-invalid @enderror" required>
+                <option value="" disabled {{ !$isEdit ? 'selected' : '' }}>Select Organization</option>
+                @foreach($organizations as $org)
+                    <option value="{{ $org->id }}" {{ old('organization_id', $isEdit ? $user->organization_id : '') == $org->id ? 'selected' : '' }}>
+                        {{ $org->name }}
+                    </option>
+                @endforeach
+            </select>
+            @error('organization_id')
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
         </div>
-        <div class="col-md-6">
-            <label for="email" class="form-label">Email Address</label>
+    </div>
+
+    @foreach($languages as $language)
+        <div class="mb-3">
+            <label for="name_{{ $language->code }}" class="form-label">Name ({{ $language->name }}) <span class="text-danger">*</span></label>
+            <input type="text" name="name[{{ $language->code }}]" id="name_{{ $language->code }}" 
+                   class="form-control @error('name.' . $language->code) is-invalid @enderror" 
+                   value="{{ old('name.' . $language->code, $isEdit ? $user->getTranslation('name', $language->code, false) : '') }}" required>
+            @error('name.' . $language->code)
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
+        </div>
+    @endforeach
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-12">
+            <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
             <input type="email" name="email" id="email" class="form-control" 
                    value="{{ old('email', $isEdit ? $user->email : '') }}" required>
         </div>
