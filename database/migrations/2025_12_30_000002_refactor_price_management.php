@@ -13,7 +13,6 @@ return new class extends Migration
     public function up(): void
     {
         Schema::dropIfExists('price_plan_rules');
-        Schema::dropIfExists('price_plans');
         
         if (Schema::hasTable('member_price_assignments')) {
             DB::table('member_price_assignments')->truncate();
@@ -30,6 +29,9 @@ return new class extends Migration
                     $table->unsignedBigInteger('plan_id')->after('member_id');
                 }
             });
+        }
+
+        Schema::dropIfExists('price_plans');
 
             // Separate schema call for FK to avoid race/grouping issues
             try {
@@ -39,7 +41,6 @@ return new class extends Migration
             } catch (\Exception $e) {
                 // FK might already exist, or other issue. Ignoring for now as we just want to proceed.
             }
-        }
     }
 
     /**
