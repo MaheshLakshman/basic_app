@@ -39,7 +39,6 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('subscriptions', \App\Http\Controllers\SubscriptionController::class);
 
     // Price Management
-    Route::resource('price_plans', \App\Http\Controllers\Admin\PricePlanController::class)->names('admin.price_plans');
     Route::resource('member_price_assignments', \App\Http\Controllers\Admin\MemberPriceAssignmentController::class)->names('admin.member_price_assignments');
     Route::resource('account_locks', \App\Http\Controllers\Admin\AccountLockController::class)->names('admin.account_locks');
     Route::resource('price_adjustments', \App\Http\Controllers\Admin\PriceAdjustmentController::class)->names('admin.price_adjustments');

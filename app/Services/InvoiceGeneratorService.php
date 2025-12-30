@@ -48,22 +48,23 @@ class InvoiceGeneratorService
                       ->orWhereNull('end_date')
                       ->orWhere('end_date', '>=', $startDate);
                 })
-                ->with('pricePlan')
+                ->with('plan.service')
                 ->get();
 
             foreach ($assignments as $assignment) {
                 // Determine billing logic based on plan type
-                $plan = $assignment->pricePlan;
+                $plan = $assignment->plan;
+                $service = $plan->service;
                 $price = $assignment->custom_price ?? $plan->price;
                 
                 $itemAmount = 0;
-                $description = "Plan: " . ($plan->getTranslation('name', 'en') ?? $plan->name);
+                $description = "Service: " . ($service->getTranslation('name', 'en') ?? $service->name) . " - Plan: " . ($plan->getTranslation('name', 'en') ?? $plan->name);
 
-                if ($plan->billing_type === 'monthly') {
+                if ($service->billing_type === 'subscription' || $service->billing_type === 'monthly') {
                     // Fixed Price
                     $itemAmount = $price;
-                    $description .= " (Monthly Fee)";
-                } elseif ($plan->billing_type === 'usage' || $plan->billing_type === 'hourly') {
+                    $description .= " (Recurring Fee)";
+                } elseif ($service->billing_type === 'usage' || $service->billing_type === 'hourly') {
                     // Calculate Usage
                     // This is 'optimized' part: fetch attendance
                     $minutes = Attendance::where('user_id', $member->id)
@@ -71,12 +72,7 @@ class InvoiceGeneratorService
                         ->where('status', 'present')
                         ->sum('duration_minutes');
                     
-                    // Simple logic: if usage, price is likely per visit or per hour?
-                    // User request said: "based on our current attendance".
-                    // Assuming price is PER SESSION or PER CHECKIN if 'usage'?
-                    // Or PER HOUR if 'hourly'?
-                    
-                    if ($plan->billing_type === 'hourly') {
+                    if ($service->billing_type === 'hourly') {
                         $hours = ceil($minutes / 60);
                         $itemAmount = $hours * $price;
                         $description .= " ({$hours} Hours @ {$price}/hr)";
@@ -90,17 +86,12 @@ class InvoiceGeneratorService
                         $itemAmount = $sessions * $price;
                         $description .= " ({$sessions} Sessions @ {$price}/session)";
                     }
-                } elseif ($plan->billing_type === 'package') {
-                    // Typically prepaid, but if generating invoice, maybe renewal? 
-                    // Treat as fixed for invoice generation.
-                    $itemAmount = $price;
-                     $description .= " (Package Renewal)";
                 }
 
                 if ($itemAmount > 0) {
                     InvoiceItem::create([
                         'invoice_id' => $invoice->id,
-                        'service_id' => null, // Could link to service if plan has one
+                        'service_id' => $service->id,
                         'description' => json_encode(['en' => $description]), // storing as json for translation support consistency
                         'quantity' => 1,
                         'unit_price' => $itemAmount,

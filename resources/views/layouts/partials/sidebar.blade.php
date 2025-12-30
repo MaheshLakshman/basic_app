@@ -76,11 +76,6 @@
         </li>
 
         <li class="sidebar-label mt-4 mb-2 small fw-bold text-muted px-3 text-uppercase">Price Management</li>
-        <li class="{{ request()->routeIs('admin.price_plans.*') ? 'active' : '' }}">
-            <a href="{{ route('admin.price_plans.index') }}" data-bs-toggle="tooltip" data-bs-placement="right" title="Price Plans">
-                <i class="bi bi-tag me-2"></i> <span>Price Plans</span>
-            </a>
-        </li>
         <li class="{{ request()->routeIs('admin.member_price_assignments.*') ? 'active' : '' }}">
             <a href="{{ route('admin.member_price_assignments.index') }}" data-bs-toggle="tooltip" data-bs-placement="right" title="Assignments">
                 <i class="bi bi-person-check me-2"></i> <span>Assignments</span>

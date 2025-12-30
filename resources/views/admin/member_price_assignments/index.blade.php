@@ -60,7 +60,7 @@ $(function() {
         columns: [
             { data: 'id', name: 'id' },
             { data: 'member_name', name: 'member.name' }, // Ensure correct column name for searching if using joins or addColumn
-            { data: 'plan_name', name: 'pricePlan.name' },
+            { data: 'plan_name', name: 'plan.name' },
             { data: 'start_date', name: 'start_date' },
             { data: 'end_date', name: 'end_date' },
             { 

@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\MemberPriceAssignment;
 use App\Models\User;
-use App\Models\PricePlan;
+use App\Models\Plan;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -14,14 +14,16 @@ class MemberPriceAssignmentController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = MemberPriceAssignment::with(['member', 'pricePlan'])->select('member_price_assignments.*');
+            $data = MemberPriceAssignment::with(['member', 'plan.service'])->select('member_price_assignments.*');
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->editColumn('member_name', function ($row) {
                     return $row->member->name;
                 })
                 ->editColumn('plan_name', function ($row) {
-                    return $row->pricePlan->name;
+                    $serviceName = $row->plan->service->getTranslation('name', app()->getLocale()) ?? $row->plan->service->name;
+                    $planName = $row->plan->getTranslation('name', app()->getLocale()) ?? $row->plan->name;
+                    return $serviceName . ' - ' . $planName;
                 })
                 ->addColumn('action', function ($row) {
                     $btn = '<a href="' . route('admin.member_price_assignments.edit', $row->id) . '" class="edit btn btn-primary btn-sm">Edit</a>';
@@ -35,8 +37,8 @@ class MemberPriceAssignmentController extends Controller
 
     public function create()
     {
-        $members = User::whereHas('roles', function($q){ $q->where('name', 'member'); })->get(); // Assuming 'member' role exists
-        $plans = PricePlan::where('status', 'active')->get();
+        $members = User::all(); // Should filter by role if possible
+        $plans = Plan::with('service')->get();
         return view('admin.member_price_assignments.create', compact('members', 'plans'));
     }
 
@@ -44,7 +46,7 @@ class MemberPriceAssignmentController extends Controller
     {
         $request->validate([
             'member_id' => 'required|exists:users,id',
-            'price_plan_id' => 'required|exists:price_plans,id',
+            'plan_id' => 'required|exists:plans,id',
             'start_date' => 'required|date',
         ]);
 
@@ -55,8 +57,8 @@ class MemberPriceAssignmentController extends Controller
 
     public function edit(MemberPriceAssignment $memberPriceAssignment)
     {
-        $members = User::all(); // Should filter by role ideally
-        $plans = PricePlan::all();
+        $members = User::all();
+        $plans = Plan::with('service')->get();
         return view('admin.member_price_assignments.edit', compact('memberPriceAssignment', 'members', 'plans'));
     }
 
@@ -64,7 +66,7 @@ class MemberPriceAssignmentController extends Controller
     {
         $request->validate([
             'member_id' => 'required|exists:users,id',
-            'price_plan_id' => 'required|exists:price_plans,id',
+            'plan_id' => 'required|exists:plans,id',
             'start_date' => 'required|date',
         ]);
 

@@ -12,7 +12,7 @@ class MemberPriceAssignment extends Model
 
     protected $fillable = [
         'member_id',
-        'price_plan_id',
+        'plan_id',
         'start_date',
         'end_date',
         'custom_price',
@@ -30,8 +30,8 @@ class MemberPriceAssignment extends Model
         return $this->belongsTo(User::class, 'member_id');
     }
 
-    public function pricePlan(): BelongsTo
+    public function plan(): BelongsTo
     {
-        return $this->belongsTo(PricePlan::class);
+        return $this->belongsTo(Plan::class);
     }
 }

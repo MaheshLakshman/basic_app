@@ -10,11 +10,15 @@
         </select>
     </div>
     <div class="mb-3">
-        <label class="form-label">Price Plan</label>
-        <select name="price_plan_id" class="form-select" required>
+        <label class="form-label">Service & Plan</label>
+        <select name="plan_id" class="form-select" required>
             <option value="">Select Plan</option>
             @foreach($plans as $plan)
-                <option value="{{ $plan->id }}">{{ $plan->name }} - {{ $plan->price }}</option>
+                <option value="{{ $plan->id }}">
+                    {{ $plan->service->getTranslation('name', app()->getLocale()) ?? $plan->service->name }} - 
+                    {{ $plan->getTranslation('name', app()->getLocale()) ?? $plan->name }} 
+                    ({{ $plan->price }})
+                </option>
             @endforeach
         </select>
     </div>

@@ -30,6 +30,7 @@
                 <option value="America/New_York" {{ old('timezone', $isEdit ? $organization->timezone : '') == 'America/New_York' ? 'selected' : '' }}>America/New_York</option>
                 <option value="Europe/London" {{ old('timezone', $isEdit ? $organization->timezone : '') == 'Europe/London' ? 'selected' : '' }}>Europe/London</option>
                 <option value="Asia/Dubai" {{ old('timezone', $isEdit ? $organization->timezone : '') == 'Asia/Dubai' ? 'selected' : '' }}>Asia/Dubai</option>
+                <option value="Asia/Kolkata" {{ old('timezone', $isEdit ? $organization->timezone : '') == 'Asia/Kolkata' ? 'selected' : '' }}>Asia/Kolkata</option>
             </select>
             @error('timezone')
                 <div class="invalid-feedback">{{ $message }}</div>
